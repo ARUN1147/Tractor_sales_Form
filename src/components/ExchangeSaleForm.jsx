@@ -149,23 +149,26 @@ const ExchangeSaleForm = () => {
           />
         </div>
 
-        {/* Vehicle Model (New) */}
+        {/* Vehicle Model Selection (dropdown) */}
         <div>
-          <label className="block mb-1">Vehicle Model (New)</label>
+          <label className="block mb-1 font-medium">Vehicle Model (New)</label>
           <select
             name="vehicleModel"
             value={formData.vehicleModel}
             onChange={onChange}
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
           >
-            <option value="">-- Select Vehicle --</option>
-            {newVehicles.map(vehicle => (
-              <option key={vehicle._id} value={vehicle._id}>
-                {vehicle.model} - ₹{vehicle.price}
+            <option value="">— Select a Vehicle —</option>
+            {newVehicles.map((veh) => (
+              <option key={veh._id} value={veh._id}>
+                {veh.model} (₹{veh.price.toLocaleString()})
               </option>
             ))}
           </select>
+          <p className="text-sm text-gray-500 mt-1">
+            If you don’t see any options, make sure you have created at least one NewVehicle in the database.
+          </p>
         </div>
 
         {/* C2C Price */}
