@@ -1,10 +1,8 @@
-// frontend/src/components/sales/NormalSaleForm.jsx
-
+// src/components/NormalSaleForm.jsx
 import React, { useState, useEffect } from 'react';
-import api from '../api/api';
+import api from '../api/api'; // Adjust the path accordingly
 
 const NormalSaleForm = () => {
-  // 1) formData holds all the fields (strings or booleans)
   const [formData, setFormData] = useState({
     location: '',
     deliveryDate: '',
@@ -12,7 +10,7 @@ const NormalSaleForm = () => {
     customerName: '',
     phoneNumber: '',
     address: '',
-    vehicleModel: '',  // will be set to a valid ObjectId string
+    vehicleModel: '',
     c2cPrice: '',
     discount: '',
     downPayment: '',
@@ -20,322 +18,254 @@ const NormalSaleForm = () => {
     financeCompany: '',
     mas: false,
     loanAmount: '',
-    docCharge: ''
+    docCharge: '',
   });
 
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [newVehicles, setNewVehicles] = useState([]); // list of { _id, model, price }
+  const [vehicleModels, setVehicleModels] = useState([]);
+  const [newVehicle, setNewVehicle] = useState({ model: '', price: '' });
 
-  // 2) On mount, fetch the list of New Vehicles
+  // Fetch vehicle models on load
   useEffect(() => {
-    const fetchVehicles = async () => {
+    async function fetchVehicleModels() {
       try {
-        const res = await api.get('/inventory/new'); // <-- adjust if your route is different
-        setNewVehicles(res.data);
-      } catch (err) {
-        console.error('Error fetching new vehicles:', err);
-        setError('Unable to load vehicle list. Refresh the page.');
+        const res = await api.get('/vehicles/models'); // Adjust API endpoint if necessary
+        setVehicleModels(res.data);
+      } catch (error) {
+        console.error('Failed to fetch vehicle models', error);
       }
-    };
-    fetchVehicles();
-  }, []);
-
-  // 3) Handle input changes (text, number, checkbox)
-  const onChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  // 4) When the user submits, convert numeric fields to numbers
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    // 5) Basic client‐side validation
-    if (!formData.vehicleModel) {
-      setError('Please select a Vehicle Model from the dropdown.');
-      return;
     }
 
-    // 6) Build the payload, converting strings→numbers appropriately
-    const payload = {
-      location: formData.location,
-      deliveryDate: formData.deliveryDate,
-      salesman: formData.salesman,
-      customerName: formData.customerName,
-      phoneNumber: formData.phoneNumber,
-      address: formData.address,
-      vehicleModel: formData.vehicleModel,                   // ObjectId string
-      c2cPrice: Number(formData.c2cPrice),
-      discount: Number(formData.discount),
-      downPayment: Number(formData.downPayment),
-      loanForm: formData.loanForm,
-      financeCompany: formData.loanForm ? formData.financeCompany : '',
-      mas: formData.mas,
-      loanAmount: formData.loanForm ? Number(formData.loanAmount) : 0,
-      docCharge: Number(formData.docCharge)
-    };
+    fetchVehicleModels();
+  }, []);
 
+  // Handle input changes
+  const onChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+  };
+
+  const onVehicleChange = (e) => {
+    setNewVehicle({
+      ...newVehicle,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleAddVehicle = async (e) => {
+    e.preventDefault();
+
+    if (newVehicle.model && newVehicle.price) {
+      try {
+        const response = await api.post('/vehicles/models', newVehicle);
+        setVehicleModels([...vehicleModels, response.data.vehicle]);
+        setNewVehicle({ model: '', price: '' });
+        alert('Vehicle model added successfully');
+      } catch (error) {
+        alert('Failed to add vehicle model');
+      }
+    } else {
+      alert('Please fill all fields');
+    }
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await api.post('/sales/normal', payload);
-      setSuccess('Normal sale recorded successfully.');
-      setError('');
-      // Optionally clear form
-      setFormData({
-        location: '',
-        deliveryDate: '',
-        salesman: '',
-        customerName: '',
-        phoneNumber: '',
-        address: '',
-        vehicleModel: '',
-        c2cPrice: '',
-        discount: '',
-        downPayment: '',
-        loanForm: false,
-        financeCompany: '',
-        mas: false,
-        loanAmount: '',
-        docCharge: ''
-      });
-    } catch (err) {
-      console.error('Error submitting normal sale:', err);
-      setError(err.response?.data?.message || 'Sale failed');
-      setSuccess('');
+      await api.post('/sales/normal', formData);
+      alert('Normal Sale recorded successfully');
+    } catch (error) {
+      alert('Error recording sale');
     }
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Normal Sale Form</h1>
+    <div className="min-h-screen bg-gradient-to-r from-[#3ab7bf] to-[#1e90ff] flex items-center justify-center px-4 py-8">
+      <form onSubmit={onSubmit} className="bg-white shadow-lg rounded-lg w-full max-w-4xl p-8 space-y-6">
+        <h2 className="text-3xl font-semibold text-center text-gray-800 mb-8">Normal Sale Form</h2>
 
-      {error && (
-        <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>
-      )}
-      {success && (
-        <div className="bg-green-100 text-green-700 p-2 mb-4 rounded">{success}</div>
-      )}
-
-      <form onSubmit={onSubmit} className="space-y-4 bg-white p-6 rounded shadow">
-        {/* Location */}
-        <div>
-          <label className="block mb-1 font-medium">Location</label>
+        {/* Customer Info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <input
             type="text"
             name="location"
             value={formData.location}
             onChange={onChange}
+            placeholder="Location"
             required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Delivery Date */}
-        <div>
-          <label className="block mb-1 font-medium">Delivery Date</label>
           <input
             type="date"
             name="deliveryDate"
             value={formData.deliveryDate}
             onChange={onChange}
             required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Salesman */}
-        <div>
-          <label className="block mb-1 font-medium">Salesman</label>
           <input
             type="text"
             name="salesman"
             value={formData.salesman}
             onChange={onChange}
+            placeholder="Salesman"
             required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Customer Name */}
-        <div>
-          <label className="block mb-1 font-medium">Customer Name</label>
           <input
             type="text"
             name="customerName"
             value={formData.customerName}
             onChange={onChange}
+            placeholder="Customer Name"
             required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Phone Number */}
-        <div>
-          <label className="block mb-1 font-medium">Phone Number</label>
           <input
             type="text"
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={onChange}
+            placeholder="Phone Number"
             required
-            pattern="\d*"
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Address */}
-        <div>
-          <label className="block mb-1 font-medium">Address</label>
           <input
             type="text"
             name="address"
             value={formData.address}
             onChange={onChange}
+            placeholder="Address"
             required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Vehicle Model Selection (dropdown) */}
-        <div>
-          <label className="block mb-1 font-medium">Vehicle Model (New)</label>
           <select
             name="vehicleModel"
             value={formData.vehicleModel}
             onChange={onChange}
             required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
-            <option value="">— Select a Vehicle —</option>
-            {newVehicles.map((veh) => (
-              <option key={veh._id} value={veh._id}>
-                {veh.model} (₹{veh.price.toLocaleString()})
+            <option value="">Select Vehicle Model</option>
+            {vehicleModels.map((vehicle) => (
+              <option key={vehicle._id} value={vehicle._id}>
+                {vehicle.model} - ₹{vehicle.price}
               </option>
             ))}
           </select>
-          <p className="text-sm text-gray-500 mt-1">
-            If you don’t see any options, make sure you have created at least one NewVehicle in the database.
-          </p>
         </div>
 
-        {/* C2C Price */}
-        <div>
-          <label className="block mb-1 font-medium">C2C Price (₹)</label>
+        {/* Add New Vehicle Model */}
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold">Add New Vehicle Model</h3>
+          <input
+            type="text"
+            name="model"
+            value={newVehicle.model}
+            onChange={onVehicleChange}
+            placeholder="Model Name"
+            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+          <input
+            type="number"
+            name="price"
+            value={newVehicle.price}
+            onChange={onVehicleChange}
+            placeholder="Price"
+            className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+          <button
+            type="button"
+            onClick={handleAddVehicle}
+            className="w-full bg-teal-600 text-white py-2 mt-4 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-400"
+          >
+            Add Vehicle Model
+          </button>
+        </div>
+
+        {/* Payment Info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <input
             type="number"
             name="c2cPrice"
             value={formData.c2cPrice}
             onChange={onChange}
+            placeholder="C2C Price"
             required
-            min="0"
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Discount */}
-        <div>
-          <label className="block mb-1 font-medium">Discount (₹)</label>
           <input
             type="number"
             name="discount"
             value={formData.discount}
             onChange={onChange}
+            placeholder="Discount"
             required
-            min="0"
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Down Payment */}
-        <div>
-          <label className="block mb-1 font-medium">Down Payment (₹)</label>
           <input
             type="number"
             name="downPayment"
             value={formData.downPayment}
             onChange={onChange}
+            placeholder="Down Payment"
             required
-            min="0"
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
 
-        {/* Loan Form?  &  MAS? */}
-        <div className="flex items-center space-x-6">
-          <label className="flex items-center">
+        {/* Loan Info */}
+        <div className="grid grid-cols-1 gap-6">
+          <label className="flex items-center space-x-2">
             <input
               type="checkbox"
               name="loanForm"
               checked={formData.loanForm}
               onChange={onChange}
-              className="mr-2"
+              className="text-teal-500"
             />
-            Loan Form?
+            <span className="text-gray-700">Loan Form</span>
           </label>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              name="mas"
-              checked={formData.mas}
-              onChange={onChange}
-              className="mr-2"
-            />
-            MAS?
-          </label>
-        </div>
 
-        {/* If loanForm is checked, show Finance Company & Loan Amount */}
-        {formData.loanForm && (
-          <>
-            <div>
-              <label className="block mb-1 font-medium">Finance Company</label>
+          {formData.loanForm && (
+            <>
               <input
                 type="text"
                 name="financeCompany"
                 value={formData.financeCompany}
                 onChange={onChange}
+                placeholder="Finance Company"
                 required
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">Loan Amount (₹)</label>
               <input
                 type="number"
                 name="loanAmount"
                 value={formData.loanAmount}
                 onChange={onChange}
+                placeholder="Loan Amount"
                 required
-                min="0"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {/* Doc Charge */}
-        <div>
-          <label className="block mb-1 font-medium">Doc Charge (₹)</label>
           <input
             type="number"
             name="docCharge"
             value={formData.docCharge}
             onChange={onChange}
+            placeholder="Document Charge"
             required
-            min="0"
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+          className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-400"
         >
           Submit Normal Sale
         </button>

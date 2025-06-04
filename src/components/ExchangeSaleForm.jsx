@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import api from '../api/api'; // Make sure this path is correct
+// src/components/ExchangeSaleForm.jsx
+import React, { useState } from 'react';
+import api from '../api/api'; // Adjust the path accordingly
 
 const ExchangeSaleForm = () => {
   const [formData, setFormData] = useState({
@@ -18,343 +19,250 @@ const ExchangeSaleForm = () => {
     mas: false,
     loanAmount: '',
     docCharge: '',
-
-    // Used vehicle details
-    make: '',
-    modelUsed: '',
-    customerNameUsed: '',
-    addressUsed: '',
-    phoneNumberUsed: '',
-    priceTaken: ''
-  });
-
-  const [newVehicles, setNewVehicles] = useState([]);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  useEffect(() => {
-    async function fetchNewVehicles() {
-      try {
-        const res = await api.get('/vehicles/new');  // Adjust API endpoint as needed
-        setNewVehicles(res.data);
-      } catch (error) {
-        console.error('Failed to fetch new vehicles', error);
-      }
+    usedVehicleDetails: {
+      make: '',
+      model: '',
+      customerName: '',
+      phoneNumber: '',
+      priceTaken: ''
     }
-    fetchNewVehicles();
-  }, []);
+  });
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    if (name.startsWith('usedVehicleDetails')) {
+      const field = name.split('.')[1];
+      setFormData({
+        ...formData,
+        usedVehicleDetails: {
+          ...formData.usedVehicleDetails,
+          [field]: value
+        }
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: type === 'checkbox' ? checked : value,
+      });
+    }
   };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
       await api.post('/sales/exchange', formData);
-      setSuccess('Exchange sale recorded successfully.');
-      setError('');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Server error creating exchange sale');
-      setSuccess('');
+      alert('Exchange Sale recorded successfully');
+    } catch (error) {
+      alert('Error recording sale');
     }
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Exchange Sale Form</h1>
-      {error && <div className="bg-red-100 text-red-700 p-2 rounded mb-4">{error}</div>}
-      {success && <div className="bg-green-100 text-green-700 p-2 rounded mb-4">{success}</div>}
-      <form onSubmit={onSubmit} className="space-y-4 bg-white p-6 rounded shadow">
+    <div className="min-h-screen bg-gradient-to-r from-[#3ab7bf] to-[#1e90ff] flex items-center justify-center px-4 py-8">
+      <form
+        onSubmit={onSubmit}
+        className="bg-white shadow-lg rounded-lg w-full max-w-4xl p-8 space-y-6"
+      >
+        <h2 className="text-3xl font-semibold text-center text-gray-800 mb-8">Exchange Sale Form</h2>
 
-        {/* Location */}
-        <div>
-          <label className="block mb-1">Location</label>
+        {/* Customer Info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <input
             type="text"
             name="location"
             value={formData.location}
             onChange={onChange}
+            placeholder="Location"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Delivery Date */}
-        <div>
-          <label className="block mb-1">Delivery Date</label>
           <input
             type="date"
             name="deliveryDate"
             value={formData.deliveryDate}
             onChange={onChange}
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Salesman */}
-        <div>
-          <label className="block mb-1">Salesman</label>
           <input
             type="text"
             name="salesman"
             value={formData.salesman}
             onChange={onChange}
+            placeholder="Salesman"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Customer Name */}
-        <div>
-          <label className="block mb-1">Customer Name</label>
           <input
             type="text"
             name="customerName"
             value={formData.customerName}
             onChange={onChange}
+            placeholder="Customer Name"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Phone Number */}
-        <div>
-          <label className="block mb-1">Phone Number</label>
           <input
             type="text"
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={onChange}
+            placeholder="Phone Number"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Address */}
-        <div>
-          <label className="block mb-1">Address (Flat No, Street, District, City, State)</label>
           <input
             type="text"
             name="address"
             value={formData.address}
             onChange={onChange}
+            placeholder="Address"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Vehicle Model Selection (dropdown) */}
-        <div>
-          <label className="block mb-1 font-medium">Vehicle Model (New)</label>
           <select
             name="vehicleModel"
             value={formData.vehicleModel}
             onChange={onChange}
             required
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
-            <option value="">— Select a Vehicle —</option>
-            {newVehicles.map((veh) => (
-              <option key={veh._id} value={veh._id}>
-                {veh.model} (₹{veh.price.toLocaleString()})
-              </option>
-            ))}
+            <option value="">Select Vehicle Model</option>
+            {/* Add options dynamically from API or static */}
           </select>
-          <p className="text-sm text-gray-500 mt-1">
-            If you don’t see any options, make sure you have created at least one NewVehicle in the database.
-          </p>
         </div>
 
-        {/* C2C Price */}
-        <div>
-          <label className="block mb-1">C2C Price (₹)</label>
+        {/* Payment Info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <input
             type="number"
             name="c2cPrice"
             value={formData.c2cPrice}
             onChange={onChange}
+            placeholder="C2C Price"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Discount */}
-        <div>
-          <label className="block mb-1">Discount (₹)</label>
           <input
             type="number"
             name="discount"
             value={formData.discount}
             onChange={onChange}
+            placeholder="Discount"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        {/* Down Payment */}
-        <div>
-          <label className="block mb-1">Down Payment (₹)</label>
           <input
             type="number"
             name="downPayment"
             value={formData.downPayment}
             onChange={onChange}
+            placeholder="Down Payment"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
 
-        {/* Loan Form and MAS */}
-        <div className="flex items-center space-x-6">
-          <label>
+        {/* Loan Info */}
+        <div className="grid grid-cols-1 gap-6">
+          <label className="flex items-center space-x-2">
             <input
               type="checkbox"
               name="loanForm"
               checked={formData.loanForm}
               onChange={onChange}
-              className="mr-2"
+              className="text-teal-500"
             />
-            Loan Form?
+            <span className="text-gray-700">Loan Form</span>
           </label>
-          <label>
-            <input
-              type="checkbox"
-              name="mas"
-              checked={formData.mas}
-              onChange={onChange}
-              className="mr-2"
-            />
-            MAS?
-          </label>
-        </div>
 
-        {/* Finance Company */}
-        {formData.loanForm && (
-          <div>
-            <label className="block mb-1">Finance Company</label>
-            <input
-              type="text"
-              name="financeCompany"
-              value={formData.financeCompany}
-              onChange={onChange}
-              required
-              className="w-full px-3 py-2 border rounded"
-            />
-          </div>
-        )}
+          {formData.loanForm && (
+            <>
+              <input
+                type="text"
+                name="financeCompany"
+                value={formData.financeCompany}
+                onChange={onChange}
+                placeholder="Finance Company"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+              <input
+                type="number"
+                name="loanAmount"
+                value={formData.loanAmount}
+                onChange={onChange}
+                placeholder="Loan Amount"
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </>
+          )}
 
-        {/* Loan Amount */}
-        {formData.loanForm && (
-          <div>
-            <label className="block mb-1">Loan Amount (₹)</label>
-            <input
-              type="number"
-              name="loanAmount"
-              value={formData.loanAmount}
-              onChange={onChange}
-              required
-              className="w-full px-3 py-2 border rounded"
-            />
-          </div>
-        )}
-
-        {/* Document Charge */}
-        <div>
-          <label className="block mb-1">Document Charge (₹)</label>
           <input
             type="number"
             name="docCharge"
             value={formData.docCharge}
             onChange={onChange}
+            placeholder="Document Charge"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
 
-        {/* Used Vehicle Details Section */}
-        <h2 className="text-xl font-semibold mt-6 mb-2">Used Vehicle Details</h2>
-
-        <div>
-          <label className="block mb-1">Make</label>
+        {/* Used Vehicle Details */}
+        <h3 className="text-xl text-gray-800 mb-4">Used Vehicle Details</h3>
+        <div className="grid grid-cols-1 gap-6">
           <input
             type="text"
-            name="make"
-            value={formData.make}
+            name="usedVehicleDetails.make"
+            value={formData.usedVehicleDetails.make}
             onChange={onChange}
+            placeholder="Vehicle Make"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        <div>
-          <label className="block mb-1">Model</label>
           <input
             type="text"
-            name="modelUsed"
-            value={formData.modelUsed}
+            name="usedVehicleDetails.model"
+            value={formData.usedVehicleDetails.model}
             onChange={onChange}
+            placeholder="Vehicle Model"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        <div>
-          <label className="block mb-1">Customer Name</label>
           <input
             type="text"
-            name="customerNameUsed"
-            value={formData.customerNameUsed}
+            name="usedVehicleDetails.customerName"
+            value={formData.usedVehicleDetails.customerName}
             onChange={onChange}
+            placeholder="Customer Name"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        <div>
-          <label className="block mb-1">Address</label>
           <input
             type="text"
-            name="addressUsed"
-            value={formData.addressUsed}
+            name="usedVehicleDetails.phoneNumber"
+            value={formData.usedVehicleDetails.phoneNumber}
             onChange={onChange}
+            placeholder="Phone Number"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-        </div>
-
-        <div>
-          <label className="block mb-1">Phone Number</label>
-          <input
-            type="text"
-            name="phoneNumberUsed"
-            value={formData.phoneNumberUsed}
-            onChange={onChange}
-            required
-            className="w-full px-3 py-2 border rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Price Taken (₹)</label>
           <input
             type="number"
-            name="priceTaken"
-            value={formData.priceTaken}
+            name="usedVehicleDetails.priceTaken"
+            value={formData.usedVehicleDetails.priceTaken}
             onChange={onChange}
+            placeholder="Price Taken"
             required
-            className="w-full px-3 py-2 border rounded"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
         </div>
 
         <button
           type="submit"
-          className="mt-4 w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition"
+          className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-400"
         >
           Submit Exchange Sale
         </button>
